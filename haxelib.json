@@ -1,0 +1,17 @@
+{
+    "name": "SScript",
+    "url": "https://github.com/ThomasDarkson/SScript",
+    "license": "Apache",
+    "tags": [
+        "hscript",
+        "sscript"
+    ],
+    "description": "An easy-to-use Haxe Script tool for all targets.",
+    "version": "7.0.0",
+    "classPath": "src/",
+    "releasenote": "Removed hscriptPos, openflPos + code cleanup + improvements and bug fixes",
+    "contributors": [
+        "ThomasDarkson"
+    ],
+    "dependencies": {}
+}
