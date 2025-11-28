@@ -1,0 +1,16 @@
+{
+    "name": "SScript",
+    "url": "https://github.com/ThomasDarkson/SScript",
+    "license": "Apache",
+    "tags": [
+        "hscript"
+    ],
+    "description": "An easy-to-use Haxe Script class for all targets.",
+    "version": "1.0.0",
+    "classPath": "src/",
+    "releasenote": "Fixes for Linux and Mac.",
+    "contributors": [
+        "ThomasDarkson"
+    ],
+    "dependencies": {}
+}
