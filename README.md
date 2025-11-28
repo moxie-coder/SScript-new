@@ -1,0 +1,324 @@
+## READ ME
+SScript is an outdated and buggy Haxe library. This repository exists solely to archive it.
+
+Only use it if you absolutely have to. Otherwise, use [hscript-iris](https://github.com/pisayesiwsi/hscript-iris) or [hscript](https://lib.haxe.org/p/hscript/).
+
+I will not provide updates or support for this library. Any pull requests will be ignored.
+
+<details>
+<summary>Original README (click to expand)</summary>
+
+
+
+# SScript
+
+SuperlativeScript is an easy to use Haxe script tool that aims to be simple while supporting all Haxe structures. It aims to be like native Haxe while staying easy to use.
+
+## Installation
+`haxelib install SScript`
+
+Enter this command in command prompt to get the latest release from Haxe library.
+
+After installing SuperlativeScript, don't forget to add it to your Haxe project.
+
+------------
+
+### OpenFL projects
+Add this to `Project.xml` to add SuperlativeScript to your OpenFL project:
+```xml
+<haxelib name="SScript"/>
+```
+### Haxe Projects
+Add this to `build.hxml` to add SuperlativeScript to your Haxe build.
+```hxml
+-lib SScript
+```
+
+## Usage
+To use SuperlativeScript, you will need a file or a script. Using a file is recommended.
+
+### Using without a file
+```haxe
+var script:tea.SScript = {}; // Create a new SuperlativeScript class
+script.doString("
+	function returnRandom():Float
+		return Math.random() * 100;
+"); // Implement the script
+var call = script.call('returnRandom');
+var randomNumber:Float = call.returnValue; // Access the returned value with returnValue
+```
+
+### Using with a file
+```haxe
+var script:tea.SScript = new tea.SScript("script.hx"); // Has the same contents with the script above
+var randomNumber:Float = script.call('returnRandom').returnValue;
+```
+
+## Classes
+With SuperlativeScript 10.0.618, classes are supported in teas and can be accessed from other teas.
+
+Example:
+```haxe
+class Main {
+	static function main()
+	{
+		var script = new tea.SScript();
+		script.doString("
+				class ScriptClass {
+					public static function returnMinus(e:Int) {
+						return -e;
+					}
+				}
+		");
+
+		var scriptTwo = new tea.SScript();
+		script.doString("
+			trace(ScriptClass.returnMinus(1)); // -1
+		");
+	}
+}
+```
+
+Teas with class(es) should be initialized first to be accessible to other teas.
+If a Tea Class is tried to be accessed without it being initialized, it will throw an exception.
+
+If you import Tea Classes in a tea, their fields will be imported into the tea,
+they will act as a local variable and they can be changed and modified but changing won't apply to class itself.
+
+#### Limitations 
+Extending is not supported, so it is not possible to create a real class from a Tea Class.
+Only static variables and functions are allowed in Tea Classes. Packages are also not supported.
+
+If a tea contains a class, it cannot have any other expressions other than classes, imports, package and enum abstracts. For example, this script is not valid.
+```haxe
+class ScriptClass {
+
+}	
+trace(1); // Exception: Unexpected trace
+```
+
+## Enum Abstracts
+With 11.0.618, enum abstracts are supported in teas and can be accessed from other teas.
+
+Example:
+```haxe
+enum abstract EnumAbstract(Int) from Int to Int {
+	public var One = 1;
+	public var Two; // Omitted and deduced by the interpreter, so the value is 2
+}
+``` 
+Just like classes, if a tea contains enum abstract the other expressions cannot be other than classes, imports, package and enum abstracts.
+
+#### Limitations
+`from` and `to` are parsed but ignored completely by the interpreter. 
+
+## Regular Expressions
+With version 20.6.618, you can create regular expressions without using `EReg`'s `new` constructor.
+Example:
+```haxe
+import tea.SScript;
+class Main {
+	static function main()
+	{
+		var tea = new SScript();
+		tea.doString('
+			function getMatches(ereg:EReg, input:String, index:Int = 0):Array<String> 
+			{
+				var matches = [];
+				while (ereg.match(input)) {
+					matches.push(ereg.matched(index)); 
+					input = ereg.matchedRight();
+				}
+				return matches;
+			}
+
+			var message = "row row row your boat";
+			var matches = getMatches(~/(row)/, message);
+			trace(matches); // [row,row,row]
+			trace(matches.length); // 3
+
+			// Email addresses regular expression
+			// (In files, using two back slashes is unnecessary)
+			var emailReg = ~/[A-Z0-9._%-]+@[A-Z0-9.-]+\\.[A-Z][A-Z][A-Z]*/i;
+			trace(emailReg.match("superlative@email.com")); // true
+		');
+	}
+}
+```
+
+#### Limitations
+With faulty EReg's, Haxe may show corrupted error messages. These errors are uncatchable and will crash the session.
+Sometimes, Haxe may not show error messages. If this happens, session will be caught in a loop and it will become unresponsive. 
+
+Platform limitations also apply here, the flag `u` is only available in C++ and Neko.
+Flag `s` is not available in C# and JavaScript.
+
+## Improved Field System
+With version 19.0.618, you can access (excluding unused) classes or enums with their full name like Haxe.
+Example:
+```haxe
+import tea.SScript;
+class Main {
+	static function main()
+	{
+		var tea = new SScript();
+		tea.doString("
+			trace(haxe.Timer.stamp());
+		");
+	}
+}
+```
+
+This makes `import` optional and is useful for one-time use of a class or enum.
+Though this feature may be exhausting for weak machines, so if you wish to disable it set `tea.SScript.defaultImprovedField` to `false`.
+
+## Reworked Function Arguments
+Function arguments have been reworked, so optional arguments will work like native Haxe.
+
+Example:
+```haxe
+function add(a:Int, ?b:Int = 1) 
+{
+	return a + b;
+}
+trace(add()); // Exception: Invalid number of parameters. Got 0, required 1 for function 'add'
+trace(add(0)) // 1 
+trace(add(0, 2)) // 2
+```
+
+## Presetting System
+Presets are the variables that get set before the tea gets executed. 
+
+SScript has a presetting system where you can set multiple preset modes 
+to customize presetting. Currently it has 3 modes, `NONE `, `MINI` and `REGULAR`.
+
+`MINI` only contains basic classes and extremely lightweight,
+`REGULAR` contains slightly more and it includes more common classes aswell.
+
+Example:
+```haxe
+import tea.SScript;
+class Main {
+	static function main() {
+		SScript.defaultTeaPreset = REGULAR;
+		var tea = new SScript("trace(Json); // haxe.Json class is included with REGULAR");
+	}
+}
+```
+
+## Using Haxe 4.3.0 Syntaxes
+SuperlativeScript supports both `?.` and `??` syntaxes including `??=`.
+
+```haxe
+import tea.SScript;
+class Main 
+{
+	static function main()
+	{
+		var script:SScript = {};
+		script.doString("
+			var string:String = null;
+			trace(string.length); // Throws an error
+			trace(string?.length); // Doesn't throw an error and returns null
+			trace(string ?? 'ss'); // Returns 'ss';
+			trace(string ??= 'ss'); // Returns 'ss' and assigns it to `string` variable
+		");
+	}
+}
+```
+
+## Extending SuperlativeScript
+You can create a class extending SuperlativeScript to customize it better.
+```haxe
+class SScriptEx extends tea.SScript
+{  
+	override function preset():Void
+	{
+		super.preset();
+		
+		// Only use 'set', 'setClass' or 'setClassString' in preset
+		// Macro classes are not allowed to be set
+		setClass(StringTools);
+		set('NaN', Math.NaN);
+		setClassString('sys.io.File');
+	}
+}
+```
+Extend other functions only if you know what you're doing.
+
+## Calling Methods from Tea's
+You can call methods and receive their return value from Tea's using `call` function.
+It needs one obligatory argument (function name) and one optional argument (function arguments array).
+
+using `call` will return a structure that contains the return value, if calling has been successful, exceptions if it did not, called function name and script file name of the Tea.
+
+Example:
+```haxe
+var tea:tea.SScript = {};
+tea.doString('
+	function method()
+	{
+		return 2 + 2;
+	}
+');
+var call = tea.call('method');
+trace(call.returnValue); // 4
+
+tea.doString('
+	function method()
+	{
+		var num:Int = 1.1;
+		return num;
+	}
+')
+
+var call = tea.call('method');
+trace(call.returnValue, call.exceptions[0]); // null, Float should be Int
+```
+
+## Global Variables
+With SuperlativeScript, you can set variables to all running Tea's.
+Example:
+
+```haxe
+var tea:tea.SScript = {};
+tea.set('variable', 1);
+tea.doString('
+	function returnVar()
+	{
+		return variable + variable2;
+	}
+');
+
+tea.SScript.globalVariables.set('variable2', 2);
+trace(tea.call('returnVar').returnValue); // 3
+```
+
+Variables from `globalVariables` can be changed in script. 
+If you do not want this, use `strictGlobalVariables` instead. They will act as a final and cannot be changed in script.
+
+## Special Object
+Special object is an object that'll get checked if a variable is not found in a Tea.
+A special object cannot be a basic type like Int, Float, String, Array and Bool.
+
+Special objects are useful for OpenFL and Flixel states.
+
+Example:
+```haxe
+import tea.SScript;
+
+class PlayState extends flixel.FlxState 
+{
+	var sprite:flixel.FlxSprite;
+	override function create()
+	{
+		sprite = new flixel.FlxSprite();
+
+		var newScript:SScript = new SScript();
+		newScript.setSpecialObject(this);
+		newScript.doString("sprite.visible = false;");
+	}
+}
+```
+
+</details>
