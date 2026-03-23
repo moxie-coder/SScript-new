@@ -104,8 +104,8 @@ class SScript
 
 		`trace(sys.FileSystem.exists("hscript/SScript.hx")); // true` 
 
-		This may be exhausting for old or weak computers. 
-		Set this to null if you experience performance problems.
+		This may be exhausting for old computers since it uses Reflection. 
+		Don't set this to true if you experience performance problems.
 	**/
 	public static var defaultImprovedField:Null<Bool> = false;
 
@@ -117,12 +117,17 @@ class SScript
 	/**
 		Default preset mode for Haxe classes.
 
-		MINI contains only basic classes like `Math`,
-		while REGULAR contains most cross-target Haxe classes.
+		**MINI** contains only basic classes like `Math`.
 
-		Default is `MINI`. Use `NONE` for no preset.
+
+		**REGULAR** contains most cross-target Haxe classes.
+
+		**FULL** contains all existing classes.
+		Can get expensive if you're handling a lot of scripts.
+
+		Default is `REGULAR`. Use `NONE` for no preset.
 	**/
-	public static var defaultPreset:PresetMode = MINI;
+	public static var defaultPreset(default, set):PresetMode = REGULAR;
 
 	/**
 		If not null, when a script is created, the function with this name
@@ -158,7 +163,7 @@ class SScript
 	/**
 		If not null, enables the improved field system for this script.
 
-		Default is `true`.
+		Disabled by default.
 
 		@see `SScript.defaultImprovedField`
 	**/
@@ -1065,5 +1070,20 @@ class SScript
 		if (interp != null)
 			interp.improvedField = value;
 		return improvedField = value;
+	}
+
+	static var showedWarning:Bool = false;
+	static function set_defaultPreset(value:PresetMode):PresetMode {
+		#if !DISABLED_MACRO_SUPERLATIVE
+		if (value == FULL && !showedWarning) {
+			trace("You set preset mode to FULL, which contains all existing classes.");
+			trace("If you're handling a lot of scripts, this can get very expensive.");
+			trace("See REGULAR or MINI for alternatives.");
+
+			showedWarning = true;
+		}
+		#end
+
+		return defaultPreset = value;
 	}
 }

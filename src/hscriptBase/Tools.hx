@@ -119,7 +119,6 @@ class Tools {
     }
 
     #if !macro
-	static final allNamesAvailable:Array<String> = [];
     static final allClassesAvailable:Map<String, Class<Dynamic>> = {
         function returnMap()
         {
@@ -133,7 +132,6 @@ class Tools {
                     var c = Type.resolveClass(i);
                     if (c != null)
                         map[i] = c;
-					allNamesAvailable.push(i);
                 }
             }
 			

@@ -901,7 +901,7 @@ class Parser {
 
 			var tk = token();
 			if( tk == TStatement ) push(tk);
-			else if( Type.enumEq(tk,TId('as')) ) {
+			else if( Type.enumEq(tk,TId('as')) || Type.enumEq(tk,TId('in')) ) {
 				var tk = token();
 				switch tk {
 					case TId(s): asIdent = s;

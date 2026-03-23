@@ -1,3 +1,12 @@
+# 22.1.1
+## Additions
+- Added `FULL` as a Preset mode
+- Added more backward compatibility
+- You can now use `in` while importing with alias
+
+## Changes
+- Default preset mode is now `REGULAR`
+
 # 22.1.0
 ## Additions
 - Added partial backward compatibility for older SScript versions

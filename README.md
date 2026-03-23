@@ -61,6 +61,58 @@ class Main {
 
 ### New features
 
+#### Import
+SScript supports normal imports, wildcard imports and imports with aliases.
+
+```haxe
+import hscript.SScript;
+
+class Main {
+	static function main() {
+		var script:SScript = new SScript();
+		script.doString("
+			import Date;
+			trace(Data.now());
+		");
+	}
+}
+```
+
+##### Wildcard Imports
+```haxe
+import hscript.SScript;
+
+class Main {
+	static function main() {
+		var script:SScript = new SScript();
+		script.doString("
+			import sys.*;
+			trace(FileSystem); // Class<sys.FileSystem>
+		");
+	}
+}
+```
+
+SScript uses a macro for wildcard imports. In most cases, it works fine. However, if you want to disable this feature, you can define `DISABLED_MACRO_SUPERLATIVE` in your project. This is not recommended, however, as doing so will also make the `FULL` preset mode unavailable.
+
+##### Import with Alias
+```haxe
+import hscript.SScript;
+
+class Main 
+{
+	static function main()
+	{
+		var script:SScript = new SScript();
+		script.doString("
+            import sys.FileSystem in L;
+            import sys.io.File as G;
+            trace(L, G); // Class<sys.FileSystem>,Class<sys.io.File>
+		");
+	}
+}
+```
+
 #### String Interpolation
 SScript supports string interpolation. Just like normal haxe, special identifiers, denoted by the dollar sign `$` within a String enclosed by single-quote `'` characters, are evaluated as if they were concatenated identifiers.
 
@@ -103,7 +155,7 @@ class Main {
 			trace(matches.length); // 3
 
 			// Email addresses regular expression
-			// (In files, use one back slash instead
+			// (In files, use one back slash instead)
 			var emailReg = ~/[A-Z0-9._%-]+@[A-Z0-9.-]+\\.[A-Z][A-Z][A-Z]*/i;
 			trace(emailReg.match("superlative@email.com")); // true
 		');
@@ -140,7 +192,7 @@ class Main {
 ```
 
 This makes `import` optional and it is useful for one-time use of a class or enum.
-This feature may be exhausting for weak machines, so if you wish to disable it set `hscript.SScript.defaultImprovedField` to `false`.
+This feature may be exhausting for weak machines and is disabled by default, so if you wish to enable it set `hscript.SScript.defaultImprovedField` to `true`.
 
 ## Reworked Function Arguments
 Function arguments have been reworked, so optional arguments will work like native Haxe.
@@ -170,10 +222,11 @@ class Main {
 Presets are the variables that get set before the script gets executed. 
 
 SScript has a presetting system where you can set multiple preset modes 
-to customize presetting. Currently it has 3 modes, `NONE`, `MINI` and `REGULAR`.
+to customize presetting. Currently it has 4 modes, `NONE`, `MINI`, `REGULAR` and `FULL`.
 
-`MINI` only contains basic classes and extremely lightweight,
-`REGULAR` contains slightly more and it includes more common classes aswell.
+- `MINI` only contains basic classes and extremely lightweight,
+- `REGULAR` contains slightly more and it includes more common classes aswell.
+- `FULL` contains all existing classes, expensive when there are many scripts being handled. (Avaiable only if `DISABLED_MACRO_SUPERLATIVE` is undefined)
 
 Example:
 ```haxe
@@ -182,8 +235,8 @@ import hscript.SScript;
 
 class Main {
 	static function main() {
-		SScript.defaultPreset = PresetMode.REGULAR;
-		var script = new SScript("trace(Json); // haxe.Json class is included with REGULAR");
+		SScript.defaultPreset = PresetMode.FULL;
+		var script = new SScript("trace(Json); // haxe.Json class is included with REGULAR and FULL");
 	}
 }
 ```
@@ -316,6 +369,7 @@ Special objects are especially useful for OpenFL and Flixel states.
 
 Example:
 ```haxe
+import flixel.FlxG;
 import hscript.SScript;
 
 class PlayState extends flixel.FlxState 
@@ -324,10 +378,14 @@ class PlayState extends flixel.FlxState
 	override function create()
 	{
 		sprite = new flixel.FlxSprite();
+		sprite.makeGraphic(FlxG.width, FlxG.height, FlxColor.WHITE);
+		add(sprite);
 
 		var newScript:SScript = new SScript();
 		newScript.setSpecialObject(this);
 		newScript.doString("sprite.visible = false;");
+
+		super.create();
 	}
 }
 ```
