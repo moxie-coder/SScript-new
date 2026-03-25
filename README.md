@@ -391,3 +391,39 @@ class PlayState extends flixel.FlxState
 	}
 }
 ```
+
+Special objects can also be Classes and Enums.
+
+```haxe
+import hscript.SScript;
+
+class Main 
+{
+	static function main()
+	{
+		var script:SScript = new SScript();
+		script.setSpecialObject(SpecialObject);
+		script.doString("
+			call(); //You called me!
+		");
+
+		var script:SScript = new SScript();
+		script.setSpecialObject(Special);
+		script.doString("
+			trace(AA(1)); //SScript:2: AA(1)
+			trace(BB); //SScript:3: BB
+		");
+	}
+}
+
+class SpecialObject {
+	static function call() {
+		trace("You called me!");
+	}
+}
+
+enum Special {
+	AA(r:Int);
+	BB;
+}
+```

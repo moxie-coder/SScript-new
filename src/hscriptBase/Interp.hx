@@ -66,6 +66,7 @@ class Interp {
 	var curExpr : Expr;
 
 	var specialObject : {obj:Dynamic , ?includeFunctions:Bool , ?exclusions:Array<String>} = {obj : null , includeFunctions: null , exclusions: null };
+	var specialObjectsFields : Array< String > = [];
 
 	var hasPrivateAccess : Bool = false;
 	var noPrivateAccess : Bool = false;
@@ -460,11 +461,10 @@ class Interp {
 		var l = locals.get(id);
 		if( l != null )
 			return l.r;
-		if( specialObject != null && specialObject.obj != null )
+		if( specialObject != null && specialObject.obj != null && specialObjectsFields.contains(id) )
 		{
 			var field = Reflect.getProperty(specialObject.obj,id);
-			if( field != null && (specialObject.includeFunctions || Type.typeof(field) != TFunction) && (specialObject.exclusions == null || !specialObject.exclusions.contains(id)) )
-				return field;
+			return field;
 		}
 		if( finalVariables.exists("this") ) {
 			var v = finalVariables["this"];
@@ -1186,5 +1186,48 @@ class Interp {
 		if( c == null ) error(EInvalidAccess(cl));
 
 		return Type.createInstance(c,args);
+	}
+
+	function generateSpecialObjectFields() {
+		specialObjectsFields = [];
+		if( specialObject != null && specialObject.obj != null ) {
+			var type = "instance";
+			if( Std.isOfType( specialObject.obj, Class) )
+				type = "class";
+			else if( Std.isOfType( specialObject.obj, Enum ) )
+				type = "enum";
+
+			var fields : Array< String > = [];
+
+			if( type == "instance")
+				fields = try Type.getInstanceFields(Type.getClass(specialObject.obj)) catch(e) [];
+			else if( type == "class")
+				fields = try Type.getClassFields(specialObject.obj) catch(e) [];
+			else if( type == "enum")
+				fields = try Type.getEnumConstructs(specialObject.obj) catch(e) [];
+
+			if( fields == null )
+				fields = []; 
+
+			if( fields.length > 0 ) {
+				for( i in 0...specialObject.exclusions.length ) {
+					var exclusion = specialObject.exclusions[i];
+					if( exclusion != null && fields.contains(exclusion) ) fields.remove(exclusion);
+				}
+				if ( !specialObject.includeFunctions ) {
+					for( i in 0...fields.length ) {
+						var field = fields[i];
+						if (field != null) {
+							var f = Reflect.getProperty(specialObject.obj, field);
+							if( f != null && Type.typeof(f) == TFunction ) {
+								fields.splice(i, 1);
+							}
+						}
+					}
+				}
+			}
+
+			specialObjectsFields = fields.copy();
+		}
 	}
 }

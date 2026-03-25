@@ -499,7 +499,7 @@ class SScript
 		if (!active)
 			return this;
 		if (obj == null)
-			return this;
+			return removeSpecialObject();
 		if (exclusions == null)
 			exclusions = new Array();
 
@@ -508,12 +508,32 @@ class SScript
 			if (Std.isOfType(obj, i))
 				throw 'Special object cannot be ${i}';
 
+		if (Type.getEnum(obj) != null)
+			throw 'Special object cannot be an enum constructor (${Type.getEnumName(Type.getEnum(obj))})';
+
 		if (interp.specialObject == null)
 			interp.specialObject = {obj: null, includeFunctions: null, exclusions: null};
 
 		interp.specialObject.obj = obj;
 		interp.specialObject.exclusions = exclusions.copy();
 		interp.specialObject.includeFunctions = includeFunctions;
+		interp.generateSpecialObjectFields();
+		return this;
+	}
+
+	/**
+		Removes the special object that was assigned to this script.
+		@return Returns this instance for chaining.
+	**/
+	public function removeSpecialObject():SScript
+	{
+		if (_destroyed)
+			return null;
+		if (!active)
+			return this;
+		
+		interp.specialObject = null;
+		interp.generateSpecialObjectFields();
 		return this;
 	}
 	
@@ -1011,6 +1031,7 @@ class SScript
 
 		presetter.destroy();
 
+		removeSpecialObject();
 		clear();
 		resetInterp();
 		destroyInterp();

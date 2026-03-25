@@ -1,3 +1,11 @@
+# 22.2.0
+## Additions
+- Special objects now supports Classes and Enums
+- Added `removeSpecialObject`
+
+## Changes
+- Special object system has been highly optimized
+
 # 22.1.2
 ## Fixes
 - Fixed backward compatability
