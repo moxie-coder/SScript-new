@@ -1,3 +1,7 @@
+# 22.2.1
+## Fixes
+- Fixed the `Special object cannot be an enum constructor` error showing up even if the special object is not an enum constructor
+
 # 22.2.0
 ## Additions
 - Special objects now supports Classes and Enums

@@ -508,8 +508,11 @@ class SScript
 			if (Std.isOfType(obj, i))
 				throw 'Special object cannot be ${i}';
 
-		if (Type.getEnum(obj) != null)
-			throw 'Special object cannot be an enum constructor (${Type.getEnumName(Type.getEnum(obj))})';
+		switch Type.typeof(obj) {
+			case TEnum(e):
+				throw 'Special object cannot be an enum constructor (${Type.getEnumName(e)})';
+			default:
+		}
 
 		if (interp.specialObject == null)
 			interp.specialObject = {obj: null, includeFunctions: null, exclusions: null};
