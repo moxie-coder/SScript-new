@@ -113,6 +113,45 @@ class Main
 }
 ```
 
+#### Static Extensions
+SScript supports Static Extensions with the `using` keyword.
+
+```haxe
+import hscript.SScript;
+
+class Main 
+{
+	static function main()
+	{
+		var script:SScript = new SScript();
+		script.setClass(IntExtender);
+		script.doString("
+			using IntExtender;
+			using StringTools;
+
+			trace(1.triple()); // 3
+			trace(.1.triple()); // 0.30000000000000004
+			/*
+				SScript doesn't check types in extension methods,
+				so 'triple' returns a Float even though it should return an Int.
+				Use it with caution.
+			*/
+
+			var str = 'str-end';
+			trace(str.startsWith('str'), str.endsWith('-end')); // true,true
+		");
+	}
+}
+
+class IntExtender {
+	static public function triple(i:Int):Int {
+		return i * 3;
+	}
+}
+```
+
+As explained above, SScript doesn’t check types. It also doesn’t verify if the correct number of arguments is used; therefore, if an incorrect number of arguments is provided (such as passing two arguments to `endsWith` like `str.endsWith(str, "-end")`), Haxe will throw a vague `Something went wrong` error.
+
 #### String Interpolation
 SScript supports string interpolation. Just like in Haxe, special identifiers denoted by the dollar sign `$` within a string (enclosed by single quotes `'`) are evaluated as expressions.
 

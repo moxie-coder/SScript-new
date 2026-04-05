@@ -17,47 +17,23 @@ enum PresetMode
 @:access(hscript.SScript)
 class Preset
 {
-    public var presetMode:PresetMode;
-
-    var script:SScript;
-    var _destroyed:Bool = false;
-    public function new(script:SScript)
+    static function preset(script:SScript)
     {
         if (script == null || script._destroyed)
             return;
 
-        this.script = script;
-        presetMode = SScript.defaultPreset;
-    }
-
-    function preset()
-    {
-        if (_destroyed || script == null || script._destroyed)
-            return;
-
-        var hArray = switch presetMode {
+        var hArray = switch script.presetMode {
             case MINI: PresetClasses.miniHaxe;
             case REGULAR: PresetClasses.regularHaxe;
             #if !DISABLED_MACRO_SUPERLATIVE
             case FULL: PresetClasses.fullHaxe;
             #end
-            case _: [];
+            default: [];
         }
 
         for (i in hArray.copy()) {
             script.setClass(i);
         }
-    }
-
-    function destroy()
-    {
-        if (_destroyed)
-            return;
-
-        script = null;
-        presetMode = null;
-
-        _destroyed = true;
     }
 }
 

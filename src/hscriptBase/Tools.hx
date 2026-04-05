@@ -49,8 +49,8 @@ class Tools {
 	}
 
 	public static function resolve( clOrEnum : String ) {
-		var cl:Dynamic = Type.resolveEnum(clOrEnum);
-		if( cl == null ) cl = Type.resolveClass(clOrEnum);
+		var cl:Dynamic = Type.resolveClass(clOrEnum);
+		if( cl == null ) cl = Type.resolveEnum(clOrEnum);
 		return cl;
 	}
 

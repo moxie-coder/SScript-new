@@ -860,15 +860,10 @@ class Parser {
 			mk(ESwitch(parentExpr, cases, def), p1, tokenMax);
 		
 		case "using":
-			var path = getIdent();
-			if( path == null || path.length < 1 )
-				error(EInvalidAccess(path));
-
-			var c = Type.resolveClass(path);
-			if( c == null )
-				error(ECustom('Invalid class $path'));
-
-			return mk(EUsing(c,path));
+            var path = [getIdent()];
+            while( maybe(TDot) )
+                path.push(getIdent());
+            return mk(EUsing(path.join("."))); 
 		case "import":
 			var path = [getIdent()];
 			var isStar = false;
@@ -1322,7 +1317,7 @@ class Parser {
 				b.addChar(c);
 			}
 		}
-		return new String(b.toString());
+		return b.toString();
 	}
 
 	function token() {
@@ -1444,6 +1439,13 @@ class Parser {
 						}
 						#end
 					default:
+						if( exp == 10 ) {
+							readPos--;
+							this.char = ".".code;
+							var i = Std.int(n);
+							return TConst( (i == n) ? CInt(i) : CFloat(n) );
+						}
+
 						this.char = char;
 						var i = Std.int(n);
 						return TConst( (exp > 0) ? CFloat(n * 10 / exp) : ((i == n) ? CInt(i) : CFloat(n)) );

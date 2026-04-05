@@ -35,6 +35,7 @@ class Printer {
 			case EUnterminatedString: "Unterminated string";
 			case EUnterminatedComment: "Unterminated comment";
 			case EInvalidPreprocessor(str): "Invalid preprocessor (" + str + ")";
+			case ETypeNotFound(s): "Type not found : " + s;
 			case EUnknownVariable(v): "Unknown variable: "+v;
 			case EInvalidIterator(v): "Invalid iterator: "+v;
 			case EInvalidOp(op): "Invalid operator: "+op;

@@ -119,7 +119,6 @@ class SScript
 
 		**MINI** contains only basic classes like `Math`.
 
-
 		**REGULAR** contains most cross-target Haxe classes.
 
 		**FULL** contains all existing classes.
@@ -202,9 +201,11 @@ class SScript
 	public var notAllowedClasses(default, null):Array<Class<Dynamic>> = [];
 
 	/**
-		Preset tool for this script.
+		Preset mode of this script. 
+
+		@see SScript.defaultPreset
 	**/
-	public var presetter(default, null):Preset;
+	public var presetMode(default, set):PresetMode;
 
 	/**
 		Use this to access to interpreter's variables!
@@ -294,7 +295,7 @@ class SScript
 
 		parser = new Parser();
 
-		presetter = new Preset(this);
+		presetMode = defaultPreset;
 		if (preset)
 			this.preset();
 
@@ -419,9 +420,11 @@ class SScript
 		This is a helper function for setting classes easily.
 		For example, if `cl` is the `sys.io.File` class, it will be set as `File`.
 		@param cl The class to set.
+		@param setAsFinal Whether to set the object as final. If set as final,
+		the object will act as a final variable and cannot be changed in the script.
 		@return this instance for chaining.
 	**/
-	public function setClass(cl:Class<Dynamic>):SScript
+	public function setClass(cl:Class<Dynamic>, ?setAsFinal:Bool = false):SScript
 	{
 		if (_destroyed)
 			return null;
@@ -445,7 +448,7 @@ class SScript
 				clName = splitCl[splitCl.length - 1];
 			}
 
-			set(clName, cl);
+			set(clName, cl, setAsFinal);
 		}
 		return this;
 	}
@@ -454,9 +457,11 @@ class SScript
 		Sets a class in this script from a string.
 		`cl` will be formatted. For example: `sys.io.File` -> `File`.
 		@param cl The class to set.
+		@param setAsFinal Whether to set the object as final. If set as final,
+		the object will act as a final variable and cannot be changed in the script.
 		@return this instance for chaining.
 	**/
-	public function setClassString(cl:String):SScript
+	public function setClassString(cl:String, ?setAsFinal:Bool = false):SScript
 	{
 		if (_destroyed)
 			return null;
@@ -476,7 +481,7 @@ class SScript
 			if (parts.length > 1)
 				cl = parts[parts.length - 1];
 
-			set(cl, cls);
+			set(cl, cls, setAsFinal);
 		}
 		return this;
 	}
@@ -788,7 +793,7 @@ class SScript
 		if (!active)
 			return;
 
-		presetter.preset();
+		Preset.preset(this);
 	}
 
 	function resetInterp():Void
@@ -807,6 +812,7 @@ class SScript
 			return;
 
 		interp.specialObject = null;
+		interp.usingMethods = null;
 		interp.script = null;
 		interp.locals = null;
 		interp.variables = null;
@@ -1032,8 +1038,6 @@ class SScript
 		if (ID != null && global.exists(Std.string(ID)))
 			global.remove(Std.string(ID));
 
-		presetter.destroy();
-
 		removeSpecialObject();
 		clear();
 		resetInterp();
@@ -1109,5 +1113,11 @@ class SScript
 		#end
 
 		return defaultPreset = value;
+	}
+
+	function set_presetMode(value:PresetMode):PresetMode {
+		if (_destroyed)
+			return null;
+		return presetMode = value;
 	}
 }

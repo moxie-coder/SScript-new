@@ -69,7 +69,7 @@ enum ExprDef {
 	ETernary( cond : Expr, e1 : Expr, e2 : Expr );
 	ESwitch( e : Expr, cases : Array<{ values : Array<Expr>, expr : Expr , ifExpr : Expr }>, ?defaultExpr : Expr);
 	EDoWhile( cond : Expr, e : Expr);
-	EUsing( op : Dynamic , n : String );
+	EUsing( c : String );
 	EImport( i : Dynamic, c : String , ?asIdent : String , ?fullName : String );
 	EImportStar( pkg : String );
 	EPackage( ?p : String );
@@ -114,6 +114,7 @@ enum ErrorDef {
 	ENullObjectReference;
 	EInvalidChar( c : Int );
 	EUnexpected( s : String );
+	ETypeNotFound( s : String );
 	EUnterminatedString;
 	EUnterminatedComment;
 	EInvalidPreprocessor( msg : String );

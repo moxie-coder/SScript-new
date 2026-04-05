@@ -1,3 +1,13 @@
+# 22.3.0
+## Additions
+- Added Static Extensions, with some limitations 
+
+## Changes
+- `presetter` is replaced with `presetMode`
+
+## Fixes
+- Some micro optimizations
+
 # 22.2.2
 ## Fixes
 - You can now edit the properties of special objects in scripts

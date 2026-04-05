@@ -21,6 +21,7 @@
  */
 package hscriptBase;
 
+import hscript.backend.MultiMap;
 import haxe.ds.*;
 import haxe.PosInfos;
 import hscriptBase.Expr;
@@ -67,6 +68,8 @@ class Interp {
 
 	var specialObject : {obj:Dynamic , ?includeFunctions:Bool , ?exclusions:Array<String>} = {obj : null , includeFunctions: null , exclusions: null };
 	var specialObjectsFields : Array< String > = [];
+
+	var usingMethods : MultiMap< Function > = new MultiMap< Function >();
 
 	var hasPrivateAccess : Bool = false;
 	var noPrivateAccess : Bool = false;
@@ -732,9 +735,21 @@ class Interp {
 				finalVariables.set(c,e);
 				
 			return if( strictVar ) error(EUnexpected("import")) else null;
-		case EUsing( e, c ):
-			if( c != null && e != null )
-				finalVariables.set( c , e );
+		case EUsing( c ):
+			var cl = Type.resolveClass(c);
+			if( cl == null )
+				cl = finalVariables.get(c);
+			if( cl == null )
+				cl = variables.get(c);
+			if( cl == null )
+				error(ETypeNotFound(c));
+
+			var fields = Reflect.fields(cl);
+			for( i in fields ) {
+				var f = Reflect.field(cl,i);
+				if( f != null && Reflect.isFunction(f) )
+					usingMethods.push(i,f);
+			}
 
 			return if( strictVar ) error(EUnexpected("using")) else null;
 		case EPackage(p):
@@ -1160,9 +1175,9 @@ class Interp {
 		restore(old);
 	}
 
+	static final mapClasses:Array<Dynamic> = ["Map", "StringMap", "IntMap", "ObjectMap", "HashMap", "EnumValueMap", "WeakMap"];
 	static inline function isMap(o:Dynamic):Bool {
-		var classes:Array<Dynamic> = ["Map", "StringMap", "IntMap", "ObjectMap", "HashMap", "EnumValueMap", "WeakMap"];
-		if(classes.contains(o))
+		if(mapClasses.contains(o))
 			return true;
 
 		return Std.isOfType(o, IMap);
@@ -1190,7 +1205,28 @@ class Interp {
 	}
 
 	function fcall( o : Dynamic, f : String, args : Array<Dynamic>) : Dynamic {
-		return call(o, get(o, f), args);
+		var exception = null;
+		try {
+			return call(o, get(o, f), args);
+		}
+		catch( e )
+			exception = e;
+
+		if( f != null ) {
+			var methods = usingMethods.get(f);
+			for( i in methods ) {
+				try {
+					var args = args.copy();
+					args.unshift(o);
+					return call(o, i, args);
+				}
+				catch( e ) {
+					exception = e;
+					continue;
+				}
+			}
+		}
+		return throw exception;
 	}
 
 	function call( o : Dynamic, f : Dynamic, args : Array<Dynamic>) : Dynamic {
