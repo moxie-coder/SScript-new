@@ -44,16 +44,10 @@ private enum SScriptNull {
 @:access(hscriptBase.Parser)
 @:access(hscript.SScript)
 class Interp {
-	#if haxe3
 	public var variables : Map<String,Dynamic>;
 	var finalVariables : Map<String,Dynamic>;
 	var locals : Map<String,{ r : Dynamic , ?isFinal : Bool }>;
 	var binops : Map<String, Expr -> Expr -> Dynamic >;
-	#else
-	public var variables : Hash<Dynamic>;
-	var locals : Hash<{ r : Dynamic }>;
-	var binops : Hash< Expr -> Expr -> Dynamic >;
-	#end
 
 	var depth : Int;
 	var inTry : Bool;
@@ -90,23 +84,15 @@ class Interp {
 	var resumeError : Bool = false;
 
 	public function new() {
-		#if haxe3
 		locals = new Map();
-		#else
-		locals = new Hash();
-		#end
 		declared = new Array();
 		resetVariables();
 		initOps();
 	}
 
 	private function resetVariables(){
-		#if haxe3
 		variables = new Map<String,Dynamic>();
 		finalVariables = new Map();
-		#else
-		variables = new Hash();
-		#end
 
 		finalVariables.set("null",null);
 		finalVariables.set("true",true);
@@ -139,11 +125,7 @@ class Interp {
 
 	function initOps() {
 		var me = this;
-		#if haxe3
 		binops = new Map();
-		#else
-		binops = new Hash();
-		#end
 		binops.set("+",function(e1,e2) return me.expr(e1) + me.expr(e2));
 		binops.set("-",function(e1,e2) return me.expr(e1) - me.expr(e2));
 		binops.set("*",function(e1,e2) return me.expr(e1) * me.expr(e2));
@@ -383,11 +365,7 @@ class Interp {
 
 	public function execute( expr : Expr ) : Dynamic {
 		depth = 0;
-		#if haxe3
 		locals = new Map();
-		#else
-		locals = new Hash();
-		#end
 		declared = new Array();
 		switch Tools.expr(expr){
 			case EBlock(e):
@@ -435,12 +413,8 @@ class Interp {
 	}
 
 	var shouldAbort = false;
-	function duplicate<T>( h : #if haxe3 Map < String, T > #else Hash<T> #end ) {
-		#if haxe3
+	function duplicate<T>( h : Map < String, T > ) {
 		var h2 = new Map();
-		#else
-		var h2 = new Hash();
-		#end
 		for( k in h.keys() )
 			h2.set(k,h.get(k));
 		return h2;
@@ -510,9 +484,6 @@ class Interp {
 			case CInt(v): return v;
 			case CFloat(f): return f;
 			case CString(s): return s;
-			#if !haxe3
-			case CInt32(v): return v;
-			#end
 			}
 		case EInterpString(strings, expressions):
 			var result = "";
@@ -605,11 +576,7 @@ class Interp {
 				return increment(e,prefix,-1);
 			case "~":
 				var e:Null<Dynamic> = expr(e);
-				#if(neko && !haxe3)
-				return haxe.Int32.complement(e);
-				#else
 				return ~e;
-				#end
 			default:
 				error(EInvalidOp(op));
 			}

@@ -16,3 +16,5 @@ typedef Tea = hscript.SScript.FunctionCall;
 typedef TeaCall = hscript.SScript.FunctionCall;
 @:deprecated('Use hscript.SScript.FunctionCall instead')
 typedef SCall = hscript.SScript.FunctionCall;
+@:deprecated('Use hscript.SScript.FunctionCall instead')
+typedef SScriptCall = hscript.SScript.FunctionCall;

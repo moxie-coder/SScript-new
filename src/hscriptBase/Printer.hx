@@ -23,8 +23,6 @@ package hscriptBase;
 import hscriptBase.Expr;
 
 @:access(hscriptBase.Tools)
-@:access(hscriptBase.TeaClass)
-@:access(hscriptBase.TeaEAbstract)
 @:keep
 class Printer {
 	public static function errorToString( e : Expr.Error ) {

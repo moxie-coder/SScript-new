@@ -283,6 +283,31 @@ class Main {
 }
 ```
 
+### Setting Variables Manually
+You can also set variables manually with `set`, `setClass`, `setClassString` and `setByPackage` (not available if `DISABLED_MACRO_SUPERLATIVE` is defined).
+
+Example:
+```haxe
+import hscript.backend.Preset;
+import hscript.SScript;
+
+class Main {
+	static function main() {
+		var script = new SScript();
+		script.set("Json", haxe.Json);
+		script.setClass(haxe.Serializer);
+		script.setClassString("haxe.ds.ArraySort");
+		script.setByPackage("haxe.sys", false); // Do NOT include sub-packages
+		script.doString("
+			trace(Json); // Class<haxe.Json>
+			trace(Serializer); // Class<haxe.Serializer>
+			trace(ArraySort); // Class<haxe.ds.ArraySort>
+			trace(FileSystem); // Class<sys.FileSystem>
+		");
+	}
+}
+```
+
 ## Using Haxe 4.3.0 Syntaxes
 SuperlativeScript supports both `?.` and `??` syntaxes including `??=`.
 

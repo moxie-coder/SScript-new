@@ -58,13 +58,8 @@ class Parser {
 	public var line : Int = 0;
 	public var opChars : String;
 	public var identChars : String;
-	#if haxe3
 	public var opPriority : Map<String,Int>;
 	public var opRightAssoc : Map<String,Bool>;
-	#else
-	public var opPriority : Hash<Int>;
-	public var opRightAssoc : Hash<Bool>;
-	#end
 
 	@:noPrivateAccess var packaged : Bool = false;
 
@@ -118,13 +113,8 @@ class Parser {
 			["=","+=","-=","*=","/=","%=","<<=",">>=",">>>=","|=","&=","^=","=>"],
 			["->"],
 		];
-		#if haxe3
 		opPriority = new Map();
 		opRightAssoc = new Map();
-		#else
-		opPriority = new Hash();
-		opRightAssoc = new Hash();
-		#end
 		for( i in 0...priorities.length )
 			for( x in priorities[i] ) {
 				opPriority.set(x, i);
@@ -1401,7 +1391,6 @@ class Parser {
 						if( n > 0 || exp > 0 )
 							invalidChar(char);
 						// read hexa
-						#if haxe3
 						var n = 0;
 						while( true ) {
 							char = readChar();
@@ -1417,27 +1406,6 @@ class Parser {
 								return TConst(CInt(n & 0xFFFFFFFF));
 							}
 						}
-						#else
-						var n = haxe.Int32.ofInt(0);
-						while( true ) {
-							char = readChar();
-							switch( char ) {
-							case 48,49,50,51,52,53,54,55,56,57: // 0-9
-								n = haxe.Int32.add(haxe.Int32.shl(n,4), cast (char - 48));
-							case 65,66,67,68,69,70: // A-F
-								n = haxe.Int32.add(haxe.Int32.shl(n,4), cast (char - 55));
-							case 97,98,99,100,101,102: // a-f
-								n = haxe.Int32.add(haxe.Int32.shl(n,4), cast (char - 87));
-							default:
-								this.char = char;
-								// we allow to parse hexadecimal Int32 in Neko, but when the value will be
-								// evaluated by Interpreter, a failure will occur if no Int32 operation is
-								// performed
-								var v = try CInt(haxe.Int32.toInt(n)) catch( e : Dynamic ) CInt32(n);
-								return TConst(v);
-							}
-						}
-						#end
 					default:
 						if( exp == 10 ) {
 							readPos--;
@@ -1707,9 +1675,6 @@ class Parser {
 		case CInt(v): Std.string(v);
 		case CFloat(f): Std.string(f);
 		case CString(s): s; // TODO : escape + quote
-		#if !haxe3
-		case CInt32(v): Std.string(v);
-		#end
 		}
 	}
 

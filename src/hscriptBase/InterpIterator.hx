@@ -2,7 +2,7 @@ package hscriptBase;
 
 @:keepSub
 @:access(hscriptBase.Interp)
-class InterpIterator 
+class InterpIterator
 {
 	public var min:Int;
 	public var max:Int;

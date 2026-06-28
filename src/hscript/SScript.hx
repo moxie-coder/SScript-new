@@ -59,6 +59,8 @@ typedef FunctionCall =
 }
 
 /**
+	[![](https://thomasdarkson.com/assets/stickers/sticker.png)](https://thomasdarkson.com)
+
 	A HScript execution helper with functions for parsing, executing, and interacting with haxe scripts.
 
 	To get started, create an SScript instance:
@@ -76,6 +78,19 @@ typedef FunctionCall =
 				}
 			');
 
+			var call = script.call('method');
+			trace(call.returnValue, call.exceptions[0]); // null, Float should be Int
+		}
+	}
+	```
+
+	You can also use files! (Not available on JavaScript)
+
+	```haxe
+	import hscript.SScript;
+	class Main {
+		static function main() {
+			var script = new SScript("script.hx");
 			var call = script.call('method');
 			trace(call.returnValue, call.exceptions[0]); // null, Float should be Int
 		}
@@ -267,6 +282,8 @@ class SScript
 	**/
 	public var packagePath(get, null):String = "";
 
+	var shouldWarn:Bool = true;
+
 	@:noPrivateAccess var _destroyed(default, null):Bool;
 
 	/**
@@ -372,8 +389,12 @@ class SScript
 					returnValue = null;
 				}
 				
-				if (defaultFunc != null)
+				if (defaultFunc != null) 
+				{
+					shouldWarn = false;
 					call(defaultFunc.functionName, defaultFunc.arguments);
+					shouldWarn = true;
+				}
 			}
 			
 			tryHaxe();
@@ -390,7 +411,7 @@ class SScript
 		the object will act as a final variable and cannot be changed in the script.
 		@return Returns this instance for chaining.
 	**/
-	public function set(key:String, ?obj:Dynamic, ?setAsFinal:Bool = false):SScript
+	public function set(key:String, ?obj:Dynamic, ?setAsFinal:Bool = null):SScript
 	{
 		if (_destroyed)
 			return null;
@@ -403,6 +424,9 @@ class SScript
 			throw 'Tried to set ${Type.getClassName(obj)} which is not allowed';
 		else if (Tools.keys.contains(key))
 			throw '$key is a keyword and cannot be replaced';
+
+		if (setAsFinal == null)
+			setAsFinal = obj != null && (Std.isOfType(obj, Class));
 
 		function setVar(key:String, obj:Dynamic):Void
 		{
@@ -424,7 +448,7 @@ class SScript
 		the object will act as a final variable and cannot be changed in the script.
 		@return this instance for chaining.
 	**/
-	public function setClass(cl:Class<Dynamic>, ?setAsFinal:Bool = false):SScript
+	public function setClass(cl:Class<Dynamic>, ?setAsFinal:Bool = null):SScript
 	{
 		if (_destroyed)
 			return null;
@@ -433,11 +457,14 @@ class SScript
 		{
 			if (traces)
 			{
-				trace('Class cannot be null');
+				traceError('Class cannot be null', 'setClass', [cl, setAsFinal]);
 			}
 
 			return null;
 		}
+
+		if (setAsFinal == null)
+			setAsFinal = cl != null;
 
 		var clName:String = Type.getClassName(cl);
 		if (clName != null)
@@ -455,13 +482,13 @@ class SScript
 
 	/**
 		Sets a class in this script from a string.
-		`cl` will be formatted. For example: `sys.io.File` -> `File`.
+		`cl` will be formatted. (e.g., `sys.io.File` -> `File`)
 		@param cl The class to set.
 		@param setAsFinal Whether to set the object as final. If set as final,
 		the object will act as a final variable and cannot be changed in the script.
 		@return this instance for chaining.
 	**/
-	public function setClassString(cl:String, ?setAsFinal:Bool = false):SScript
+	public function setClassString(cl:String, ?setAsFinal:Bool = null):SScript
 	{
 		if (_destroyed)
 			return null;
@@ -469,7 +496,7 @@ class SScript
 		if (cl == null || cl.length < 1)
 		{
 			if (traces)
-				trace('Class cannot be null');
+				traceError('Class cannot be null', 'setClassString', [cl, setAsFinal]);
 
 			return null;
 		}
@@ -477,6 +504,9 @@ class SScript
 		var cls:Class<Dynamic> = Type.resolveClass(cl);
 		if (cls != null)
 		{
+			if (setAsFinal == null)
+				setAsFinal = cls != null;
+
 			var parts = cl.split('.');
 			if (parts.length > 1)
 				cl = parts[parts.length - 1];
@@ -485,6 +515,72 @@ class SScript
 		}
 		return this;
 	}
+
+	#if !DISABLED_MACRO_SUPERLATIVE
+	/**
+		Sets multiple classes in this script from the provided package.
+
+		@param _package The package name containing the classes (e.g., `sys.io`)
+		@param recursive Whether to include classes in sub-packages (e.g., if true and `_package` is `sys`, `sys.io.File` will be included)
+		@param setAsFinal Whether to set the classes as final. If set as final,
+		the classes will act as a final variable and cannot be changed in the script.
+		@return this instance for chaining.
+	**/
+	public function setByPackage(_package:String, ?recursive:Bool = true, ?setAsFinal:Bool = null):SScript 
+	{
+		if (_destroyed)
+			return null;
+
+		if (_package == null || (_package = StringTools.trim(_package)).length < 1)
+		{
+			if (traces)
+				traceError('Package name cannot be null or empty', 'setByPackage', [_package, recursive, setAsFinal]);
+
+			return null;
+		}
+
+		var prefix:String = _package;
+		if (!StringTools.endsWith(_package, "."))
+			prefix += ".";
+			
+		var prefixLength:Int = prefix.length;
+
+		for (i => k in Tools.allClassesAvailable) 
+		{
+			if (!StringTools.startsWith(i, prefix))
+				continue;
+
+			if (!recursive)
+			{
+				if (i.indexOf('.', prefixLength) != -1)
+					continue;
+			}
+
+			if (setAsFinal == null)
+				setAsFinal = k != null;
+
+			setClass(k, setAsFinal);
+		}
+
+		return this;
+	}
+	#else
+	/**
+		Sets multiple classes in this script from the provided package.
+
+		**This function will only return this instance for chaining**, **because it requires** `DISABLED_MACRO_SUPERLATIVE` **to be undefined to work properly.**
+
+		@param cl The package name with classes in it (e.g., `sys.io`)
+		@param recursive Whether to include classes in sub-packages (e.g., if true and `_package` is `sys`, `sys.io.File` will be included)
+		@param setAsFinal Whether to set the classes as final. If set as final,
+		the classes will act as a final variable and cannot be changed in the script.
+		@return this instance for chaining.
+	**/
+	public function setByPackage(_package:String, ?recursive:Bool = true, ?setAsFinal:Bool = null):SScript 
+	{
+		return this;
+	}
+	#end
 
 	/**
 		A special object is checked when a variable is not found in this script instance.
@@ -615,7 +711,7 @@ class SScript
 		if (!active)
 		{
 			if (traces)
-				trace("This script is not active!");
+				traceError("This script is not active!", "get");
 
 			return null;
 		}
@@ -638,9 +734,10 @@ class SScript
 
 		@param func Function name in script. 
 		@param args Arguments for `func`. If the function does not require arguments, leave this as `null`.
+		@param className This argument is unused and has no effect. It was added to add backwards compatibility for projects using very old SScript versions (**3.0.0**-**4.1.0**).
 		@return Returns a `FunctionCall` object.
 	**/
-	public function call(func:String, ?args:Array<Dynamic> = null):FunctionCall
+	public function call(func:String, ?args:Array<Dynamic> = null, ?className:String):FunctionCall
 	{
 		if (_destroyed)
 			return {
@@ -684,9 +781,9 @@ class SScript
 		if (func == null || func.trim().length == 0)
 		{
 			if (traces)
-				trace('Function name cannot be invalid for $scriptFile!');
+				traceError('Function name cannot be invalid', 'call', [func, args]);
 
-			pushException('Function name cannot be invalid for $scriptFile!');
+			pushException('Function name cannot be invalid' + ((scriptFile != null && scriptFile.length > 0) ? 'for $scriptFile!' : ''));
 			return caller;
 		}
 		
@@ -694,19 +791,16 @@ class SScript
 		if (fun != null && Type.typeof(fun) != TFunction)
 		{
 			if (traces)
-				trace('$func is not a function');
+				traceError('$func is not a function', 'call', [func, args]);
 
 			pushException('$func is not a function');
 		}
 		else if (fun == null)
 		{
 			if (traces)
-				trace('Function $func does not exist in $scriptFile.');
+				traceError('Function $func does not exist', "call", [func, args]);
 
-			if (scriptFile != null && scriptFile.length > 0)
-				pushException('Function $func does not exist in $scriptFile.');
-			else 
-				pushException('Function $func does not exist in this SScript instance. ID: ' + this.ID);
+			pushException('Function $func does not exist in ${toString()}.');
 		}
 		else 
 		{
@@ -801,7 +895,7 @@ class SScript
 		if (_destroyed)
 			return;
 
-		interp.locals = #if haxe3 new Map() #else new Hash() #end;
+		interp.locals = new Map();
 		while (interp.declared.length > 0)
 			interp.declared.pop();
 	}
@@ -936,7 +1030,11 @@ class SScript
 				}
 
 				if (defaultFunc != null)
+				{
+					shouldWarn = false;
 					call(defaultFunc.functionName, defaultFunc.arguments);
+					shouldWarn = true;
+				}
 			}
 
 			tryHaxe();	
@@ -956,15 +1054,24 @@ class SScript
 		return this;
 	}
 
-	inline function toString():String
+	/**
+		Converts this instance of SScript to a String and returns it.
+
+		For scripts without a file, it will use its `ID`. (e.g, "[SScript #618]")
+
+		For scripts with a file, it will use the file name. (e.g, "[SScript (script.hx)]")
+
+		@return This SScript instance as a string.
+	**/
+	public inline function toString():String
 	{
 		if (_destroyed)
 			return "null";
 
 		if (scriptFile != null && scriptFile.length > 0)
-			return scriptFile;
+			return "[SScript (" + scriptFile + ")]";
 
-		return "[SScript]";
+		return "[SScript" + (ID != null ? (" #" + ID) : "") + "]";
 	}
 
 	#if sys
@@ -1055,6 +1162,28 @@ class SScript
 		ID = null;
 		returnValue = null;
 		_destroyed = true;
+	}
+
+	function traceError(error:String, funcCalled:String, ?args:Array<Dynamic>)
+	{
+		if (!shouldWarn)
+			return;
+
+		var buf = new StringBuf();
+		buf.add(this.toString());
+		buf.add(" ");
+		buf.add(error);
+		buf.add(", error message from function '");
+		buf.add(funcCalled);
+		buf.add("'");
+
+		if (args != null && args.length > 0)
+		{
+			buf.add(", passed arguments are: ");
+			buf.add(args.join(", "));
+		}
+
+		trace(buf.toString());
 	}
 
 	function get_variables():Map<String, Dynamic>

@@ -1,3 +1,20 @@
+## 22.4.0
+## Additions
+- Added `setByPackage`, which sets multiple classes in a package (not available if `DISABLED_MACRO_SUPERLATIVE` is defined)
+- Added `className` argument to `call`, to improve backward compatibility
+
+## Changes
+- Reworked `traces`, if `true`, logs will now show the SScript instance the error came from, the error itself, the called function's name and the arguments passed to it
+- `toString` method is now public and modified, it now displays the script's file name (or its `ID` if the script was created without a file)
+- In `set`, `setClass`, and `setClassString`, the setAsFinal argument now defaults to `null`. When the object being set is a class and `setAsFinal` is `null`, `setAsFinal` will automatically be set to `true`
+
+## Fixes
+- Fixed multiple typos across the documentation
+
+## Removals
+- Removed dead code that supposedly added support for Haxe 2
+    - SScript doesn't support Haxe 2 or 3
+
 ## 22.3.1
 ## Fixes
 - Fixed C# compilation error (error CS1002)
@@ -31,7 +48,7 @@
 
 # 22.1.2
 ## Fixes
-- Fixed backward compatability
+- Fixed backward compatibility
 - Fixed grammar issues in README
 
 # 22.1.1
